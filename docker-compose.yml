@@ -1,6 +1,6 @@
 services:
   youtrack:
-    image: jetbrains/youtrack:latest
+    image: jetbrains/youtrack:${YOUTRACK_VERSION:-2025.2.93511}
     env_file:
       - stack.env
     volumes:
