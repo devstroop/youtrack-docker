@@ -1,0 +1,47 @@
+services:
+  youtrack:
+    image: jetbrains/youtrack:2020.2.7479
+    volumes:
+      - yt_data:/opt/youtrack/data
+      - yt_conf:/opt/youtrack/conf
+      - yt_logs:/opt/youtrack/logs
+      - yt_backups:/opt/youtrack/backups
+    restart: unless-stopped
+    ports:
+      - "${YOUTRACK_PORT:-8080}:8080"
+    networks:
+      - youtrack-net
+
+  s3fs:
+    build:
+      context: ./s3fs
+      dockerfile: Dockerfile
+    devices:
+      - /dev/fuse
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor=unconfined
+    environment:
+      AWS_S3_BUCKET: "${AWS_S3_BUCKET}"
+      AWS_S3_ACCESS_KEY_ID: "${AWS_S3_ACCESS_KEY_ID}"
+      AWS_S3_SECRET_ACCESS_KEY: "${AWS_S3_SECRET_ACCESS_KEY}"
+      AWS_S3_URL: "${AWS_S3_URL:-https://s3.us-east-1.amazonaws.com}"
+      S3FS_ARGS: "${S3FS_ARGS:--o allow_other -o use_cache=/tmp/cache}"
+    volumes:
+      - yt_backups:/opt/s3fs/bucket:shared
+      - s3fs_cache:/tmp/cache
+    restart: unless-stopped
+    networks:
+      - youtrack-net
+
+volumes:
+  yt_data:
+  yt_conf:
+  yt_logs:
+  yt_backups:
+  s3fs_cache:
+
+networks:
+  youtrack-net:
+    driver: bridge
