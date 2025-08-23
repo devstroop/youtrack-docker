@@ -29,7 +29,10 @@ services:
       AWS_S3_URL: "${AWS_S3_URL:-https://s3.us-east-1.amazonaws.com}"
       S3FS_ARGS: "${S3FS_ARGS:--o allow_other -o use_cache=/tmp/cache}"
     volumes:
-      - yt_backups:/opt/s3fs/bucket:shared
+      - s3fs_bucket:/opt/s3fs/bucket:shared
+      - yt_conf:/data/yt_conf:ro
+      - yt_logs:/data/yt_logs:ro
+      - yt_backups:/data/yt_backups:ro
       - s3fs_cache:/tmp/cache
     restart: unless-stopped
     networks:
@@ -41,6 +44,7 @@ volumes:
   yt_logs:
   yt_backups:
   s3fs_cache:
+  s3fs_bucket:
 
 networks:
   youtrack-net:
