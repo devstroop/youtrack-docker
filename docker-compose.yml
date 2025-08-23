@@ -1,6 +1,8 @@
 services:
   youtrack:
     image: jetbrains/youtrack:2020.2.7479
+    env_file:
+      - stack.env
     volumes:
       - yt_data:/opt/youtrack/data
       - yt_conf:/opt/youtrack/conf
@@ -16,6 +18,8 @@ services:
     build:
       context: ./s3fs
       dockerfile: Dockerfile
+    env_file:
+      - stack.env
     devices:
       - /dev/fuse
     cap_add:
