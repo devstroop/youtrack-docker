@@ -1,6 +1,6 @@
 services:
   youtrack:
-    image: jetbrains/youtrack:${YOUTRACK_VERSION:-2025.2.93511}
+    image: jetbrains/youtrack:${YOUTRACK_VERSION:-2025.2.98781}
     container_name: youtrack
     user: "13001:13001"
     env_file:
