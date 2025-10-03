@@ -1,14 +1,13 @@
 services:
   youtrack:
     image: jetbrains/youtrack:${YOUTRACK_VERSION:-2025.2.93511}
-    container_name: youtrack
     env_file:
       - stack.env
     volumes:
-      - youtrack_data:/opt/youtrack/data
-      - youtrack_conf:/opt/youtrack/conf
-      - youtrack_logs:/opt/youtrack/logs
-      - youtrack_backups:/opt/youtrack/backups
+      - ${YOUTRACK_DATA:-youtrack_data}:/opt/youtrack/data
+      - ${YOUTRACK_CONF:-youtrack_conf}:/opt/youtrack/conf
+      - ${YOUTRACK_LOGS:-youtrack_logs}:/opt/youtrack/logs
+      - ${YOUTRACK_BACKUPS:-youtrack_backups}:/opt/youtrack/backups
     restart: unless-stopped
     ports:
       - "${YOUTRACK_PORT:-8080}:8080"
@@ -25,7 +24,6 @@ services:
     build:
       context: ./s3fs
       dockerfile: Dockerfile
-    container_name: s3fs
     env_file:
       - stack.env
     depends_on:
@@ -45,7 +43,7 @@ services:
       S3FS_ARGS: "${S3FS_ARGS:--o allow_other -o use_cache=/tmp/cache -o max_stat_cache_size=100000 -o stat_cache_expire=900}"
     volumes:
       - s3fs_bucket:/opt/s3fs/bucket:shared
-      - youtrack_backups:/data/youtrack_backups:ro
+      - ${YOUTRACK_BACKUPS:-youtrack_backups}:/data/youtrack_backups:ro
       - s3fs_cache:/tmp/cache
     restart: unless-stopped
     networks:
