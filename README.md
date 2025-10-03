@@ -19,11 +19,12 @@ This Docker Compose setup runs JetBrains YouTrack with automated S3 backup synch
 
 ## Quick Start
 
+### Option 1: Using Named Volumes (Recommended)
+
 1. **Clone and configure:**
    ```bash
    git clone <repository-url>
    cd youtrack-docker
-   cp stack.env stack.env.local
    ```
 
 2. **Edit `stack.env` with your settings:**
@@ -45,6 +46,39 @@ This Docker Compose setup runs JetBrains YouTrack with automated S3 backup synch
 4. **Access YouTrack:**
    Open http://localhost:8080 in your browser
 
+### Option 2: Using Bind Mounts (For Custom Paths)
+
+1. **Edit `stack.env` to specify custom paths:**
+   ```bash
+   YOUTRACK_DATA=/var/lib/youtrack/data
+   YOUTRACK_CONF=/var/lib/youtrack/conf
+   YOUTRACK_LOGS=/var/lib/youtrack/logs
+   YOUTRACK_BACKUPS=/var/lib/youtrack/backups
+   ```
+
+2. **Setup permissions (Linux only):**
+   ```bash
+   # Make script executable
+   chmod +x setup-permissions.sh
+   
+   # Run permission setup (may require sudo)
+   ./setup-permissions.sh
+   
+   # Or use make
+   make setup
+   ```
+
+3. **For Windows with PowerShell:**
+   ```powershell
+   # Run as Administrator
+   .\setup-permissions.ps1
+   ```
+
+4. **Start services:**
+   ```bash
+   make up
+   ```
+
 ## Configuration
 
 ### Environment Variables
@@ -53,6 +87,10 @@ This Docker Compose setup runs JetBrains YouTrack with automated S3 backup synch
 |----------|-------------|---------|
 | `YOUTRACK_VERSION` | YouTrack version tag | `2025.2.93511` |
 | `YOUTRACK_PORT` | Port to expose YouTrack | `8080` |
+| `YOUTRACK_DATA` | Data directory path | Empty (named volume) |
+| `YOUTRACK_CONF` | Config directory path | Empty (named volume) |
+| `YOUTRACK_LOGS` | Logs directory path | Empty (named volume) |
+| `YOUTRACK_BACKUPS` | Backups directory path | Empty (named volume) |
 | `AWS_S3_BUCKET` | S3 bucket name | Required |
 | `AWS_S3_ACCESS_KEY_ID` | AWS access key | Required |
 | `AWS_S3_SECRET_ACCESS_KEY` | AWS secret key | Required |
@@ -123,6 +161,64 @@ docker-compose down
 # Restart a specific service
 docker-compose restart youtrack
 ```
+
+## Permissions
+
+### YouTrack User
+
+YouTrack runs as UID:GID `13001:13001` inside the container. This is the default user created by the official JetBrains YouTrack image.
+
+### Named Volumes vs Bind Mounts
+
+**Named Volumes (Recommended):**
+- Docker manages permissions automatically
+- No manual permission setup required
+- Easier to use and more portable
+- Set `YOUTRACK_DATA=` (empty) in stack.env
+
+**Bind Mounts (Custom Paths):**
+- Requires manual permission setup
+- Useful for specific directory requirements
+- Requires directories owned by UID:GID 13001:13001
+- Set `YOUTRACK_DATA=/your/custom/path` in stack.env
+
+### Setting Up Permissions for Bind Mounts
+
+**On Linux:**
+
+```bash
+# Option 1: Use the setup script
+chmod +x setup-permissions.sh
+sudo ./setup-permissions.sh
+
+# Option 2: Manual setup
+mkdir -p -m 750 /path/to/data /path/to/conf /path/to/logs /path/to/backups
+sudo chown -R 13001:13001 /path/to/data /path/to/conf /path/to/logs /path/to/backups
+
+# Option 3: Use make
+make setup
+```
+
+**On Windows:**
+
+```powershell
+# Run PowerShell as Administrator
+.\setup-permissions.ps1
+```
+
+**On macOS:**
+
+Docker Desktop for Mac handles permissions automatically via its VM. You can use either named volumes or bind mounts without manual permission setup.
+
+### Permission Setup Script Features
+
+The `setup-permissions.sh` script:
+- ✅ Reads paths from `stack.env`
+- ✅ Detects bind mounts vs named volumes
+- ✅ Creates directories with mode 750
+- ✅ Sets ownership to 13001:13001
+- ✅ Provides clear feedback and error handling
+- ✅ Works with both relative and absolute paths
 
 ## Architecture
 

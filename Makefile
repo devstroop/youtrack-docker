@@ -1,7 +1,8 @@
-.PHONY: help up down restart logs logs-youtrack logs-s3fs backup clean rebuild
+.PHONY: help setup up down restart logs logs-youtrack logs-s3fs backup clean rebuild
 
 help:
 	@echo "Available commands:"
+	@echo "  make setup           - Setup permissions for bind mounts"
 	@echo "  make up              - Start all services"
 	@echo "  make down            - Stop all services"
 	@echo "  make restart         - Restart all services"
@@ -11,6 +12,10 @@ help:
 	@echo "  make backup          - Create YouTrack backup"
 	@echo "  make clean           - Stop and remove all containers, networks"
 	@echo "  make rebuild         - Rebuild and restart all services"
+
+setup:
+	@chmod +x setup-permissions.sh
+	@./setup-permissions.sh
 
 up:
 	docker-compose up -d

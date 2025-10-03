@@ -2,3 +2,5 @@
 *.swp
 *.tmp
 .DS_Store
+stack.env.local
+stack.env.production
