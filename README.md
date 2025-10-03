@@ -87,10 +87,18 @@ This Docker Compose setup runs JetBrains YouTrack with automated S3 backup synch
 |----------|-------------|---------|
 | `YOUTRACK_VERSION` | YouTrack version tag | `2025.2.93511` |
 | `YOUTRACK_PORT` | Port to expose YouTrack | `8080` |
+| `YOUTRACK_CPU_LIMIT` | Maximum CPU cores for YouTrack | `4.0` |
+| `YOUTRACK_CPU_RESERVATION` | Reserved CPU cores for YouTrack | `1.0` |
+| `YOUTRACK_MEMORY_LIMIT` | Maximum memory for YouTrack | `4G` |
+| `YOUTRACK_MEMORY_RESERVATION` | Reserved memory for YouTrack | `2G` |
 | `YOUTRACK_DATA` | Data directory path | Empty (named volume) |
 | `YOUTRACK_CONF` | Config directory path | Empty (named volume) |
 | `YOUTRACK_LOGS` | Logs directory path | Empty (named volume) |
 | `YOUTRACK_BACKUPS` | Backups directory path | Empty (named volume) |
+| `S3FS_CPU_LIMIT` | Maximum CPU cores for S3FS | `1.0` |
+| `S3FS_CPU_RESERVATION` | Reserved CPU cores for S3FS | `0.25` |
+| `S3FS_MEMORY_LIMIT` | Maximum memory for S3FS | `512M` |
+| `S3FS_MEMORY_RESERVATION` | Reserved memory for S3FS | `256M` |
 | `AWS_S3_BUCKET` | S3 bucket name | Required |
 | `AWS_S3_ACCESS_KEY_ID` | AWS access key | Required |
 | `AWS_S3_SECRET_ACCESS_KEY` | AWS secret key | Required |
@@ -358,22 +366,97 @@ If you encounter permission errors with S3FS:
 
 5. **Use HTTPS** for all S3 endpoints
 
-## Performance Tuning
+## Resource Limits
 
-### For Large Instances
+### Default Resource Allocation
 
-Increase memory limits in `docker-compose.yml`:
+**YouTrack Service:**
+- CPU Limit: 4.0 cores (max)
+- CPU Reservation: 1.0 cores (guaranteed)
+- Memory Limit: 4G (max)
+- Memory Reservation: 2G (guaranteed)
 
-```yaml
-services:
-  youtrack:
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 2G
+**S3FS Service:**
+- CPU Limit: 1.0 cores (max)
+- CPU Reservation: 0.25 cores (guaranteed)
+- Memory Limit: 512M (max)
+- Memory Reservation: 256M (guaranteed)
+
+### Adjusting Resource Limits
+
+#### Small Instances (< 100 users)
+
+Edit `stack.env`:
+```bash
+YOUTRACK_CPU_LIMIT=2.0
+YOUTRACK_CPU_RESERVATION=0.5
+YOUTRACK_MEMORY_LIMIT=2G
+YOUTRACK_MEMORY_RESERVATION=1G
 ```
+
+#### Medium Instances (100-500 users)
+
+Default settings are suitable:
+```bash
+YOUTRACK_CPU_LIMIT=4.0
+YOUTRACK_CPU_RESERVATION=1.0
+YOUTRACK_MEMORY_LIMIT=4G
+YOUTRACK_MEMORY_RESERVATION=2G
+```
+
+#### Large Instances (> 500 users)
+
+Edit `stack.env`:
+```bash
+YOUTRACK_CPU_LIMIT=8.0
+YOUTRACK_CPU_RESERVATION=2.0
+YOUTRACK_MEMORY_LIMIT=8G
+YOUTRACK_MEMORY_RESERVATION=4G
+```
+
+#### Very Large Instances (> 1000 users)
+
+Edit `stack.env`:
+```bash
+YOUTRACK_CPU_LIMIT=16.0
+YOUTRACK_CPU_RESERVATION=4.0
+YOUTRACK_MEMORY_LIMIT=16G
+YOUTRACK_MEMORY_RESERVATION=8G
+```
+
+### Understanding Resource Limits
+
+**Limits:**
+- Maximum resources the container can use
+- Container will be throttled/killed if exceeded
+- Set based on peak usage scenarios
+
+**Reservations:**
+- Guaranteed minimum resources
+- Docker scheduler ensures availability
+- Set based on normal operational needs
+
+### Monitoring Resource Usage
+
+```bash
+# View real-time resource usage
+docker stats youtrack s3fs
+
+# View resource usage over time
+docker stats --no-stream youtrack s3fs
+```
+
+### S3FS Resource Adjustment
+
+S3FS is lightweight and rarely needs more resources. Only increase if you see performance issues:
+
+```bash
+# For high-throughput scenarios
+S3FS_CPU_LIMIT=2.0
+S3FS_MEMORY_LIMIT=1G
+```
+
+## Performance Tuning
 
 ### For Slow Networks
 

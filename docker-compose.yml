@@ -21,6 +21,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '${YOUTRACK_CPU_LIMIT:-4.0}'
+          memory: ${YOUTRACK_MEMORY_LIMIT:-4G}
+        reservations:
+          cpus: '${YOUTRACK_CPU_RESERVATION:-1.0}'
+          memory: ${YOUTRACK_MEMORY_RESERVATION:-2G}
 
   s3fs:
     build:
@@ -56,6 +64,14 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '${S3FS_CPU_LIMIT:-1.0}'
+          memory: ${S3FS_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: '${S3FS_CPU_RESERVATION:-0.25}'
+          memory: ${S3FS_MEMORY_RESERVATION:-256M}
 
 volumes:
   youtrack_data:
